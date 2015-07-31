@@ -11,6 +11,7 @@ public class App
 {
 		private static String imageUrl = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
 		private static String postUrl = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
+		private static String noDates = "Unfortunately, there are no appointments available at this time.";
 		public static void main(String[] args) {
 	    // Create an instance of HttpClient.
 	    HttpClient client = new HttpClient();
@@ -42,6 +43,7 @@ public class App
 	      fos.close();
 
 	      //Enter capcha text
+	      System.out.println("Please, enter text from capcha image:");
 	      Scanner sc = new Scanner(System.in);
 	      String capchaText = sc.nextLine();
 
@@ -52,6 +54,7 @@ public class App
 	      post.addParameter("categoryId", "584");
 	      post.addParameter("locationCode", "kiew");
 	      post.addParameter("realmId", "357");
+	      post.setParameter("request_locale", "en");	//Request english lang instead of deuch
 
 
 	      statusCode = client.executeMethod(post);
@@ -64,9 +67,14 @@ public class App
 	      byte[] responseBody = post.getResponseBody();
 	      // Deal with the response.
 	      
+	      if(new String(responseBody).contains(noDates)) {
+	    	  System.out.println(noDates);
+	      } else {
+	    	// Use caution: ensure correct character encoding and is not binary data
+	    	  System.out.println(new String(responseBody));
+	      }
 	      
-	      // Use caution: ensure correct character encoding and is not binary data
-	      System.out.println(new String(responseBody));
+	      
 
 	    } catch (HttpException e) {
 	      System.err.println("Fatal protocol violation: " + e.getMessage());

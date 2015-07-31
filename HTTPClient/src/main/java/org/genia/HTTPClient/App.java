@@ -12,6 +12,7 @@ public class App
 		private static String imageUrl = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
 		private static String postUrl = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
 		private static String noDates = "Unfortunately, there are no appointments available at this time.";
+		private static String wrongText = "The entered text was wrong";
 		public static void main(String[] args) {
 	    // Create an instance of HttpClient.
 	    HttpClient client = new HttpClient();
@@ -64,14 +65,17 @@ public class App
 	      }
 
 	      // Read the response body.
-	      byte[] responseBody = post.getResponseBody();
+	      String responseBody = post.getResponseBodyAsString();
 	      // Deal with the response.
 	      
-	      if(new String(responseBody).contains(noDates)) {
+	      if(responseBody.contains(wrongText)) {
+	    	  throw new WrongTextExeption("The entered text was wrong");
+	      }
+	      if(responseBody.contains(noDates)) {
 	    	  System.out.println(noDates);
 	      } else {
 	    	// Use caution: ensure correct character encoding and is not binary data
-	    	  System.out.println(new String(responseBody));
+	    	  System.out.println(responseBody);
 	      }
 	      
 	      
@@ -82,7 +86,9 @@ public class App
 	    } catch (IOException e) {
 	      System.err.println("Fatal transport error: " + e.getMessage());
 	      e.printStackTrace();
-	    } finally {
+	    } catch (WrongTextExeption e) {
+			System.out.println(e.getMessage());
+		} finally {
 	      // Release the connection.
 	      method.releaseConnection();
 	    }  

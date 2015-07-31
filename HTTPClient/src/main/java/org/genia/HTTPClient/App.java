@@ -5,33 +5,63 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.io.*;
+import java.util.Scanner;
 
 public class App 
 {
-	private static String url = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do?locationCode=kiew&realmId=357&categoryId=584&dateStr=";
-
-	  public static void main(String[] args) {
+		private static String imageUrl = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
+		private static String postUrl = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
+		public static void main(String[] args) {
 	    // Create an instance of HttpClient.
 	    HttpClient client = new HttpClient();
 
 	    // Create a method instance.
-	    GetMethod method = new GetMethod(url);
+	    GetMethod method = new GetMethod(imageUrl);
 	    
 	    // Provide custom retry handler is necessary
+	    
 	    method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
 	    		new DefaultHttpMethodRetryHandler(3, false));
 
 	    try {
 	      // Execute the method.
+
 	      int statusCode = client.executeMethod(method);
 
 	      if (statusCode != HttpStatus.SC_OK) {
 	        System.err.println("Method failed: " + method.getStatusLine());
 	      }
 
+	      //Save capcha image
+	      InputStream is = method.getResponseBodyAsStream();
+	      FileOutputStream fos = new FileOutputStream(new File("D:\\capcha.jpg"));
+	      int inByte;
+	      while((inByte = is.read()) != -1) 
+	    	  fos.write(inByte);
+	      is.close();
+	      fos.close();
+
+	      //Enter capcha text
+	      Scanner sc = new Scanner(System.in);
+	      String capchaText = sc.nextLine();
+
+	      //Form and execute POST method
+	      PostMethod post = new PostMethod(postUrl);
+	      post.addParameter("action:appointment_showMonth", "Weiter");
+	      post.addParameter("captchaText", capchaText);
+	      post.addParameter("categoryId", "584");
+	      post.addParameter("locationCode", "kiew");
+	      post.addParameter("realmId", "357");
+
+
+	      statusCode = client.executeMethod(post);
+
+	      if (statusCode != HttpStatus.SC_OK) {
+	    	  System.err.println("Post method failed: " + post.getStatusLine());
+	      }
+
 	      // Read the response body.
-	      byte[] responseBody = method.getResponseBody();
-	      System.out.println(method.getPath());
+	      byte[] responseBody = post.getResponseBody();
 	      // Deal with the response.
 	      
 	      

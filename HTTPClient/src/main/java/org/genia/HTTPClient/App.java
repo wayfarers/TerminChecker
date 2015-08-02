@@ -5,20 +5,22 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
 import java.io.*;
+import java.util.List;
 import java.util.Scanner;
 
 public class App 
 {
-		private static String imageUrl = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
+		private static String IMAGE_URL = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
 		private static String postUrl = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
 		private static String noDates = "Unfortunately, there are no appointments available at this time.";
 		private static String wrongText = "The entered text was wrong";
+		
 		public static void main(String[] args) {
 	    // Create an instance of HttpClient.
 	    HttpClient client = new HttpClient();
 
 	    // Create a method instance.
-	    GetMethod method = new GetMethod(imageUrl);
+	    GetMethod method = new GetMethod(IMAGE_URL);
 	    
 	    // Provide custom retry handler is necessary
 	    
@@ -42,12 +44,14 @@ public class App
 	    	  fos.write(inByte);
 	      is.close();
 	      fos.close();
+	      
+	      Process process = new ProcessBuilder("cmd","/c", "D:/capcha.jpg").start();	//show image
 
 	      //Enter capcha text
 	      System.out.println("Please, enter text from capcha image:");
 	      Scanner sc = new Scanner(System.in);
 	      String capchaText = sc.nextLine();
-
+	      
 	      //Form and execute POST method
 	      PostMethod post = new PostMethod(postUrl);
 	      post.addParameter("action:appointment_showMonth", "Weiter");
@@ -55,7 +59,7 @@ public class App
 	      post.addParameter("categoryId", "584");
 	      post.addParameter("locationCode", "kiew");
 	      post.addParameter("realmId", "357");
-	      post.setParameter("request_locale", "en");	//Request english lang instead of deuch
+	      post.setParameter("request_locale", "en");	//Request english lang instead of german
 
 
 	      statusCode = client.executeMethod(post);
@@ -71,6 +75,8 @@ public class App
 	      if(responseBody.contains(wrongText)) {
 	    	  throw new WrongTextExeption("The entered text was wrong");
 	      }
+	      
+	      
 	      if(responseBody.contains(noDates)) {
 	    	  System.out.println(noDates);
 	      } else {
@@ -94,3 +100,75 @@ public class App
 	    }  
 	  }
 }
+
+class TerminChecker {
+	
+	CaptchaSolver captchaSolver;
+	
+	public TerminChecker(CaptchaSolver captchaSolver) {
+		this.captchaSolver = captchaSolver;
+	}
+	
+	public CheckResult checkTermins() {
+		return null;
+	}
+}
+
+abstract class CaptchaSolver {
+	abstract public String solveCaptcha(String fileName);
+}
+
+class DeathByCaptchaSolver extends CaptchaSolver {
+
+	@Override
+	public String solveCaptcha(String fileName) {
+		return null;
+	}
+}
+
+class HumanInputSolver extends CaptchaSolver {
+
+	@Override
+	public String solveCaptcha(String fileName) {
+		return null;
+	}
+}
+
+enum Status {
+	HAS_APPOINTMENTS, 
+	NO_APPOINTMENTS, 
+	CAPTCHA_ERROR, 
+	OTHER_ERROR;
+}
+
+class CheckResult {
+	Status status;
+	public String errorMessage;
+	public List<String> appointments;
+}
+
+
+class TerminCheckerApp {
+	public static void main(String[] args) {
+		TerminChecker checker = new TerminChecker(new HumanInputSolver());
+		
+		CheckResult result = checker.checkTermins();
+		switch (result.status) {
+		case HAS_APPOINTMENTS:
+			// Notify by email on change
+		case NO_APPOINTMENTS:
+			// Log it.
+		case CAPTCHA_ERROR:
+			// Save the picture and log the error
+		case OTHER_ERROR:
+			// Log the error
+		default:
+			break;
+		}
+	}
+}
+
+// Proper design
+// DeathcByCaptcha
+// Email notifications
+// Cron job on the server

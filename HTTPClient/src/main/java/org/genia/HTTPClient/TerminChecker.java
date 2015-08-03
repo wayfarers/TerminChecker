@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -13,6 +14,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.lang3.StringUtils;
 
 //TODO: DeathcByCaptcha
 //TODO: Email notifications
@@ -67,6 +69,7 @@ public class TerminChecker {
 				result.status = Status.NO_APPOINTMENTS;
 			} else if(responseBody.contains(HAS_DATES)) {
 				result.status = Status.HAS_APPOINTMENTS;
+				result.appointments = parseDates(responseBody);
 			} else {
 				System.out.println(responseBody);
 			}
@@ -117,7 +120,18 @@ public class TerminChecker {
 	}
 	
 	public List<String> parseDates(String response) {
-		//TODO: implement parse of HTML
-		return null;
+		List<String> dateList = new ArrayList<String>();	//Diamond doesn't work
+		String start = "<h4>";
+		String end = "</h4>";
+		
+		int startIndex = response.indexOf(start);
+		int endIndex = response.indexOf(end);
+		while (startIndex != -1) {
+			String date = StringUtils.deleteWhitespace(response.substring(startIndex + 5, endIndex));
+			dateList.add(StringUtils.replace(date, "DAY", "DAY - "));
+			startIndex = response.indexOf(start, endIndex);
+			endIndex = response.indexOf(end, startIndex);
+		}
+		return dateList;
 	}
 }

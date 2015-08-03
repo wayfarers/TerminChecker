@@ -2,7 +2,7 @@ package org.genia.HTTPClient;
 
 public class TerminCheckerApp {
 	public static void main(String[] args) {
-		TerminChecker checker = new TerminChecker(new HumanInputSolver());
+		TerminChecker checker = new TerminChecker(new DeathByCaptchaSolver());
 		
 		CheckResult result = checker.checkTermins();
 		switch (result.status) {

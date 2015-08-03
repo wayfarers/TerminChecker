@@ -34,7 +34,7 @@ public class TerminChecker {
 	public CheckResult checkTermins() {
 		CheckResult result = new CheckResult();
 		String captchaText = null;
-		String fileName = "D:\\capcha.jpg";
+		String fileName = "D:\\captcha.jpg";
 
 		GetMethod getMethod = new GetMethod(IMAGE_URL);
 		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
@@ -54,6 +54,10 @@ public class TerminChecker {
 			String responseBody = sendCaptchaText(captchaText);
 
 			if(responseBody.contains(WRONG_TEXT)) {
+				if (captchaSolver instanceof DeathByCaptchaSolver) {
+					DeathByCaptchaSolver dbcSolver = (DeathByCaptchaSolver) captchaSolver;
+					dbcSolver.reportCaptchaAsIncorrect();
+				}
 				throw new WrongTextExeption("The entered text was wrong");
 			}
 

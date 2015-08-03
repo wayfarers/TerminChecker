@@ -46,10 +46,12 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
                 System.out.println("CAPTCHA " + this.captchaFilename + " uploaded: " + captcha.id);
 
                 // Poll for the uploaded CAPTCHA status.
+                int sec = 0;
                 while (captcha.isUploaded() && !captcha.isSolved()) {
                     Thread.sleep(Client.POLLS_INTERVAL * 1000);
                     captcha = this.client.getCaptcha(captcha);
-                    System.out.println("5s");
+                    sec += 5;
+                    System.out.println(sec + "sec elapsed");
                 }
 
                 if (captcha.isSolved()) {

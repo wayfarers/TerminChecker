@@ -8,11 +8,14 @@ public class TerminCheckerApp {
 		switch (result.status) {
 		case HAS_APPOINTMENTS:
 			// Notify by email on change
-			System.out.println("There is a new appointments.");
+			System.out.println("There are new appointments.");
+			for (String date : result.appointments) {
+				System.out.println(date);
+			}
 			break;
 		case NO_APPOINTMENTS:
 			// Log it.
-			System.out.println("There is no appointments.");
+			System.out.println("There are no appointments.");
 			break;
 		case CAPTCHA_ERROR:
 			// Save the picture and log the error

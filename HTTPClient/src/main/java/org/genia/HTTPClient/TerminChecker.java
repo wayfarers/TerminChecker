@@ -16,9 +16,9 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang3.StringUtils;
 
-//TODO: DeathcByCaptcha
 //TODO: Email notifications
 //TODO: Cron job on the server
+//TODO: Learn basics of regexp. Examination!!! Hahahaha
 
 public class TerminChecker {
 	private static String IMAGE_URL = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
@@ -48,16 +48,17 @@ public class TerminChecker {
 			int statusCode = client.executeMethod(getMethod);
 
 			if (statusCode != HttpStatus.SC_OK) {
-				System.err.println("Get method failed: " + getMethod.getStatusLine());
+				return CheckResult.error("Get method failed: " + getMethod.getStatusLine());
 			}
 
 			saveCaptchaImage(getMethod.getResponseBodyAsStream(), fileName);
 
 			captchaText = captchaSolver.solveCaptcha(fileName);
 
-			String responseBody = sendCaptchaText(captchaText);
+			String responseBody = submitCaptchaForm(captchaText);
 
 			if(responseBody.contains(WRONG_TEXT)) {
+				// TODO - possibly make reportCaptchaAsIncorrect a generic method in the interface.
 				if (captchaSolver instanceof DeathByCaptchaSolver) {
 					DeathByCaptchaSolver dbcSolver = (DeathByCaptchaSolver) captchaSolver;
 					dbcSolver.reportCaptchaAsIncorrect();
@@ -72,6 +73,7 @@ public class TerminChecker {
 				result.appointments = parseDates(responseBody);
 			} else {
 				System.out.println(responseBody);
+				return CheckResult.error("Cannot parse dates");
 			}
 
 		} catch (HttpException e) {
@@ -91,7 +93,7 @@ public class TerminChecker {
 		return result;
 	}
 	
-	private String sendCaptchaText(String captchaText) throws HttpException, IOException {
+	private String submitCaptchaForm(String captchaText) throws HttpException, IOException {
 
 		PostMethod post = new PostMethod(POST_URL);
 		post.addParameter("action:appointment_showMonth", "Weiter");
@@ -120,7 +122,17 @@ public class TerminChecker {
 	}
 	
 	public List<String> parseDates(String response) {
-		List<String> dateList = new ArrayList<String>();	//Diamond doesn't work
+		
+		List<String> dateList = new ArrayList<>();	//Diamond doesn't work
+//		
+//		Matcher matcher = Pattern.compile("<h4>[ ]*([^< ]+)[ ]*<").matcher(response);
+//		
+//		while (matcher.find()) {
+//			dateList.add(matcher.group(1));
+//		}
+//		
+		
+		
 		String start = "<h4>";
 		String end = "</h4>";
 		
@@ -130,7 +142,8 @@ public class TerminChecker {
 			String date = StringUtils.deleteWhitespace(response.substring(startIndex + 5, endIndex));
 			dateList.add(StringUtils.replace(date, "DAY", "DAY - "));
 			startIndex = response.indexOf(start, endIndex);
-			endIndex = response.indexOf(end, startIndex);
+//			endIndex = response.indexOf(end, startIndex);
+//			" sdfgsdfg    ".trim();
 		}
 		return dateList;
 	}

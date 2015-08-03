@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -22,6 +23,7 @@ public class TerminChecker {
 	private static String POST_URL = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
 	private static String NO_DATES = "Unfortunately, there are no appointments available at this time.";
 	private static String WRONG_TEXT = "The entered text was wrong";
+	private static String HAS_DATES = "Appointments are available";
 	
 	CaptchaSolver captchaSolver;
 
@@ -63,6 +65,8 @@ public class TerminChecker {
 
 			if(responseBody.contains(NO_DATES)) {
 				result.status = Status.NO_APPOINTMENTS;
+			} else if(responseBody.contains(HAS_DATES)) {
+				result.status = Status.HAS_APPOINTMENTS;
 			} else {
 				System.out.println(responseBody);
 			}
@@ -110,5 +114,10 @@ public class TerminChecker {
 			fos.write(inByte);
 		is.close();
 		fos.close();
+	}
+	
+	public List<String> parseDates(String response) {
+		//TODO: implement parse of HTML
+		return null;
 	}
 }

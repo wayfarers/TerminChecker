@@ -17,7 +17,6 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.lang3.StringUtils;
 
 //TODO: Email notifications
 //TODO: Cron job on the server

@@ -56,13 +56,10 @@ public class CheckResult implements Serializable {
 				new FileInputStream("result.dat"));) {
 			return (CheckResult) in.readObject();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			System.out.println("No previous result file was found");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

@@ -18,7 +18,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
-//TODO: Email notifications
 //TODO: Cron job on the server
 //TODO: Learn basics of regexp. Examination!!! Hahahaha
 
@@ -63,7 +62,7 @@ public class TerminChecker {
 //			String responseBody = FakeResponse.getFakeResponse();
 
 			if(responseBody.contains(WRONG_TEXT)) {
-				// TODO - possibly make reportCaptchaAsIncorrect a generic method in the interface.
+				// TODO: Possibly make reportCaptchaAsIncorrect a generic method in the interface.
 				if (captchaSolver instanceof DeathByCaptchaSolver) {
 					DeathByCaptchaSolver dbcSolver = (DeathByCaptchaSolver) captchaSolver;
 					dbcSolver.reportCaptchaAsIncorrect();

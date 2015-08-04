@@ -1,11 +1,14 @@
 package org.genia.HTTPClient;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -30,13 +33,15 @@ public class TerminChecker {
 	CaptchaSolver captchaSolver;
 
 	HttpClient client = new HttpClient();
+	
+	CheckResult result = new CheckResult();
 
 	public TerminChecker(CaptchaSolver captchaSolver) {
 		this.captchaSolver = captchaSolver;
 	}
 
 	public CheckResult checkTermins() {
-		CheckResult result = new CheckResult();
+		
 		String captchaText = null;
 		String fileName = "D:\\captcha.jpg";
 
@@ -56,6 +61,7 @@ public class TerminChecker {
 			captchaText = captchaSolver.solveCaptcha(fileName);
 
 			String responseBody = submitCaptchaForm(captchaText);
+//			String responseBody = FakeResponse.getFakeResponse();
 
 			if(responseBody.contains(WRONG_TEXT)) {
 				// TODO - possibly make reportCaptchaAsIncorrect a generic method in the interface.
@@ -139,17 +145,38 @@ public class TerminChecker {
 		int startIndex = response.indexOf(start);
 		int endIndex = response.indexOf(end);
 		while (startIndex != -1) {
-			String date = StringUtils.deleteWhitespace(response.substring(startIndex + 5, endIndex));
-			dateList.add(StringUtils.replace(date, "DAY", "DAY - "));
+			String date = response.substring(startIndex + 5, endIndex).trim();
+			dateList.add(date);
 			startIndex = response.indexOf(start, endIndex);
-//			endIndex = response.indexOf(end, startIndex);
-//			" sdfgsdfg    ".trim();
+			endIndex = response.indexOf(end, startIndex);
 		}
 		return dateList;
 	}
 	
 	public void sendNotification(String email) {
-		//TODO: implement notification
+		Properties creds = new Properties();
+		try {
+			creds.load(new FileInputStream("mainCredentials.properties"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		String subject = "Termin Checker: changes in dates!";
+		String body = "";
+
+		if(result.status == Status.NO_APPOINTMENTS) {
+			body = "No dates are available for now.";
+		} else if (result.status == Status.HAS_APPOINTMENTS) {
+			body += "Appointments are available:\n\n";
+			for (String date : result.appointments) {
+				body += date + "\n";
+			}
+		} else {
+			body = "Some error occured: " + result.errorMessage;
+		}
+		
+		MailUtils.sendEmail(creds, email, subject, body);
 	}
 	
 	public static boolean isDatesChanged(CheckResult result) {

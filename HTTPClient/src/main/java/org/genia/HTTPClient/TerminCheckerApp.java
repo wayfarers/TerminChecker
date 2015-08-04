@@ -1,8 +1,14 @@
 package org.genia.HTTPClient;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class TerminCheckerApp {
 	public static void main(String[] args) {
 		TerminChecker checker = new TerminChecker(new DeathByCaptchaSolver());
+		List<String> emails = new ArrayList<>();
+		emails.add("genia.sushko@gmail.com");
+		emails.add("yura.sushko@gmail.com");
 		
 		CheckResult result = checker.checkTermins();
 		switch (result.status) {
@@ -13,16 +19,19 @@ public class TerminCheckerApp {
 				System.out.println(date);
 			}
 			if (TerminChecker.isDatesChanged(result)) {
-				checker.sendNotification("genia@gmail.com");
-				System.out.println("Notification was sent to genia@gmail.com");
+				for (String email : emails) {
+					checker.sendNotification(email);
+				}
 			}
 			break;
 		case NO_APPOINTMENTS:
 			// Log it.
 			System.out.println("There are no appointments.");
+			result.appointments.add("There are no appointments.");
 			if (TerminChecker.isDatesChanged(result)) {
-				checker.sendNotification("genia@gmail.com");
-				System.out.println("Notification was sent to genia@gmail.com");
+				for (String email : emails) {
+					checker.sendNotification(email);
+				}
 			}
 			break;
 		case CAPTCHA_ERROR:
@@ -38,7 +47,6 @@ public class TerminCheckerApp {
 		default:
 			break;
 		}
-		
 		result.saveOnDisk();
 	}
 }

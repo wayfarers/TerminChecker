@@ -147,4 +147,13 @@ public class TerminChecker {
 		}
 		return dateList;
 	}
+	
+	public void sendNotification(String email) {
+		//TODO: implement notification
+	}
+	
+	public static boolean isDatesChanged(CheckResult result) {
+		CheckResult prevResult = CheckResult.restoreLastResult();
+		return !result.equals(prevResult);
+	}
 }

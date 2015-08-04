@@ -12,10 +12,18 @@ public class TerminCheckerApp {
 			for (String date : result.appointments) {
 				System.out.println(date);
 			}
+			if (TerminChecker.isDatesChanged(result)) {
+				checker.sendNotification("genia@gmail.com");
+				System.out.println("Notification was sent to genia@gmail.com");
+			}
 			break;
 		case NO_APPOINTMENTS:
 			// Log it.
 			System.out.println("There are no appointments.");
+			if (TerminChecker.isDatesChanged(result)) {
+				checker.sendNotification("genia@gmail.com");
+				System.out.println("Notification was sent to genia@gmail.com");
+			}
 			break;
 		case CAPTCHA_ERROR:
 			// Save the picture and log the error
@@ -30,5 +38,7 @@ public class TerminCheckerApp {
 		default:
 			break;
 		}
+		
+		result.saveOnDisk();
 	}
 }

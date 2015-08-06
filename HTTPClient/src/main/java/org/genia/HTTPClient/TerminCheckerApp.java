@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO: check also next 2 month
-//TODO: errors logging
 //TODO: Change Serialization to JSON
 //TODO: cron job
 //TODO: Learn basics of regexp. Examination!!! Hahahaha

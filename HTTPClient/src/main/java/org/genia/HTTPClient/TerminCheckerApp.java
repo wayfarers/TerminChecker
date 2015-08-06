@@ -7,6 +7,7 @@ import java.util.List;
 //TODO: Change Serialization to JSON
 //TODO: cron job
 //TODO: Learn basics of regexp. Examination!!! Hahahaha
+//TODO: if CAPTCHA was rejected (e.g. due to overload) - wait for some time. Do not send POST if captcha was rejected. 
 
 public class TerminCheckerApp {
 	public static void main(String[] args) {

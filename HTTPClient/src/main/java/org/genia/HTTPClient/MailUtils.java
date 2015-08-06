@@ -11,7 +11,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 public class MailUtils {
-	public static void sendEmail(Properties credentials, String to, String subject, String body) {
+	public static void sendEmail(final Properties credentials, String to, String subject, String body) {
 		Properties props = new Properties();
 		props.put("mail.smtp.host", "smtp.gmail.com");
 		props.put("mail.smtp.socketFactory.port", "465");

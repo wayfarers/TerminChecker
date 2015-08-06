@@ -5,7 +5,7 @@
 	<groupId>org.genia</groupId>
 	<artifactId>HTTPClient</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 
 	<name>HTTPClient</name>
 	<url>http://maven.apache.org</url>

@@ -25,22 +25,22 @@ public class TerminCheckerApp {
 				for (String date : result.appointments) {
 					System.out.println(date);
 				}
-//				if (TerminChecker.isDatesChanged(result)) {
-//					for (String email : emails) {
-//						checker.sendNotification(email);
-//					}
-//				}
+				if (TerminChecker.isDatesChanged(result)) {
+					for (String email : emails) {
+						checker.sendNotification(email);
+					}
+				}
 				captchaIncorrect = false;
 				break;
 			case NO_APPOINTMENTS:
 				// Log it.
 				System.out.println("There are no appointments.");
 				result.appointments.add("There are no appointments.");
-//				if (TerminChecker.isDatesChanged(result)) {
-//					for (String email : emails) {
-//						checker.sendNotification(email);
-//					}
-//				}
+				if (TerminChecker.isDatesChanged(result)) {
+					for (String email : emails) {
+						checker.sendNotification(email);
+					}
+				}
 				captchaIncorrect = false;
 				break;
 			case CAPTCHA_ERROR:

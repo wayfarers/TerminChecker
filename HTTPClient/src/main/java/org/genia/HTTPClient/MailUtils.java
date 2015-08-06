@@ -42,6 +42,7 @@ public class MailUtils {
 			System.out.println("Email was sent to " + to);
 
 		} catch (MessagingException e) {
+			Logger.logError("Error while sending email. " + e.getMessage());
 			throw new RuntimeException(e);
 		}
 	}

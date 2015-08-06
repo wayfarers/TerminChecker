@@ -21,7 +21,7 @@ public class CheckResult implements Serializable {
 		CheckResult result = new CheckResult();
 		result.status = Status.OTHER_ERROR;
 		result.errorMessage = message;
-		
+		Logger.logError(message);
 		return result;
 	}
 	

@@ -2,3 +2,7 @@
 /credentials.properties
 /result.dat
 /mainCredentials.properties
+/wrongCaptchas/
+/captcha.jpg
+/log.txt
+/mailCredentials.properties

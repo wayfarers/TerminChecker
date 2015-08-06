@@ -23,8 +23,10 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 		try {
 			props.load(new FileInputStream("credentials.properties"));
 		} catch (FileNotFoundException e) {
+			Logger.logError("DBC credentials not found.");
 			e.printStackTrace();
 		} catch (IOException e) {
+			Logger.logError("Error while loading DBC credentials. " + e.getMessage());
 			e.printStackTrace();
 		}
 		userName = props.getProperty("username");
@@ -68,9 +70,11 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
                     }*/
                 } else {
                     System.out.println("Failed solving CAPTCHA");
+                    Logger.logError("Failed solving CAPTCHA");
                 }
             }
         } catch (java.lang.Exception e) {
+        	Logger.logError(e.getMessage());
             System.err.println(e.toString());
         }
 		
@@ -87,12 +91,14 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 			    System.out.println("CAPTCHA " + this.captchaFilename + " reported as incorrectly solved");
 			} else {
 			    System.out.println("Failed reporting incorrectly solved CAPTCHA");
+			    Logger.logError("Failed reporting incorrectly solved CAPTCHA");
 			}
 		}  catch (java.lang.Exception e) {
+			Logger.logError(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			File img = new File(captchaFilename);
-			File wrongCaptchas = new File(img.getParent() + "wrongCaptchas\\");
+			File wrongCaptchas = new File("wrongCaptchas\\");
 			wrongCaptchas.mkdir();
 			img.renameTo(new File(wrongCaptchas.getAbsolutePath() + "\\" + captcha.text + ".jpg"));
 		}

@@ -18,15 +18,13 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
-//TODO: Cron job on the server
-//TODO: Learn basics of regexp. Examination!!! Hahahaha
-
 public class TerminChecker {
 	private static String IMAGE_URL = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
 	private static String POST_URL = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
 	private static String NO_DATES = "Unfortunately, there are no appointments available at this time.";
 	private static String WRONG_TEXT = "The entered text was wrong";
 	private static String HAS_DATES = "Appointments are available";
+	private static String CAPTCHA_FILE = "captcha.jpg";
 	
 	CaptchaSolver captchaSolver;
 
@@ -41,7 +39,7 @@ public class TerminChecker {
 	public CheckResult checkTermins() {
 		
 		String captchaText = null;
-		String fileName = "D:\\captcha.jpg";
+//		String CAPTCHA_FILE = "D:\\captcha.jpg";
 
 		GetMethod getMethod = new GetMethod(IMAGE_URL);
 		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
@@ -54,12 +52,15 @@ public class TerminChecker {
 				return CheckResult.error("Get method failed: " + getMethod.getStatusLine());
 			}
 
-			saveCaptchaImage(getMethod.getResponseBodyAsStream(), fileName);
+			saveCaptchaImage(getMethod.getResponseBodyAsStream(), CAPTCHA_FILE);
 
-			captchaText = captchaSolver.solveCaptcha(fileName);
+			captchaText = captchaSolver.solveCaptcha(CAPTCHA_FILE);
 
 			String responseBody = submitCaptchaForm(captchaText);
 //			String responseBody = FakeResponse.getFakeResponse();
+			if (responseBody == null) {
+				CheckResult.error("Response body is NULL");
+			}
 
 			if(responseBody.contains(WRONG_TEXT)) {
 				// TODO: Possibly make reportCaptchaAsIncorrect a generic method in the interface.
@@ -67,7 +68,7 @@ public class TerminChecker {
 					DeathByCaptchaSolver dbcSolver = (DeathByCaptchaSolver) captchaSolver;
 					dbcSolver.reportCaptchaAsIncorrect();
 				}
-				throw new WrongTextExeption("The entered text was wrong");
+				throw new WrongTextExeption("The entered text was wrong. Captcha text: " + captchaText);
 			}
 
 			if(responseBody.contains(NO_DATES)) {
@@ -83,12 +84,15 @@ public class TerminChecker {
 		} catch (HttpException e) {
 			result.errorMessage = "Fatal protocol violation: " + e.getMessage();
 			result.status = Status.OTHER_ERROR;
+			Logger.logError(result.errorMessage);
 		} catch (IOException e) {
 			result.errorMessage = "Fatal transport error: " + e.getMessage();
 			result.status = Status.OTHER_ERROR;
+			Logger.logError(result.errorMessage);
 		} catch (WrongTextExeption e) {
 			result.errorMessage = e.getMessage();
 			result.status = Status.CAPTCHA_ERROR;
+			Logger.logError(result.errorMessage);
 		} finally {
 			// Release the connection.
 			getMethod.releaseConnection();
@@ -110,19 +114,24 @@ public class TerminChecker {
 		int statusCode = client.executeMethod(post);
 
 		if (statusCode != HttpStatus.SC_OK) {
-			System.err.println("Post method failed: " + post.getStatusLine());
+			Logger.logError("Post method failed: " + post.getStatusLine());
+			return null;
 		}
 		
 		return post.getResponseBodyAsString();
 	}
 
-	private void saveCaptchaImage(InputStream is, String fileName) throws IOException {
-		FileOutputStream fos = new FileOutputStream(new File(fileName));
-		int inByte;
-		while((inByte = is.read()) != -1) 
-			fos.write(inByte);
-		is.close();
-		fos.close();
+	private void saveCaptchaImage(InputStream is, String fileName) {
+		try (FileOutputStream fos = new FileOutputStream(new File(fileName))) {
+			int inByte;
+			while((inByte = is.read()) != -1) 
+				fos.write(inByte);
+			is.close();
+		} catch (IOException e) {
+			Logger.logError("Error saving captcha image. " + e.getMessage());
+		}
+		
+		
 	}
 	
 	public List<String> parseDates(String response) {
@@ -154,10 +163,12 @@ public class TerminChecker {
 	public void sendNotification(String email) {
 		Properties creds = new Properties();
 		try {
-			creds.load(new FileInputStream("mainCredentials.properties"));
+			creds.load(new FileInputStream("mailCredentials.properties"));
 		} catch (FileNotFoundException e) {
+			Logger.logError("Mail credentials not found.");
 			e.printStackTrace();
 		} catch (IOException e) {
+			Logger.logError("Error while loading credentials.");
 			e.printStackTrace();
 		}
 		String subject = "Termin Checker: changes in dates!";

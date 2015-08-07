@@ -49,12 +49,12 @@ public class TerminCheckerApp {
 				// Save the picture and log the error
 				System.out.println("Wrong captcha text");
 				System.out.println(result.errorMessage);
-				break outerloop;
+				break;
 			case OTHER_ERROR:
 				// Log the error
 				System.out.println("Other error occured");
 				System.out.println(result.errorMessage);
-				break;
+				break outerloop;
 			default:
 				break;
 			}

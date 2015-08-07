@@ -39,6 +39,7 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 	public String solveCaptcha(String fileName) {
 		client.isVerbose = true;
 		captchaFilename = fileName;
+		captcha = null;
 		
 		try {
             // Put your CAPTCHA image file, file object, input stream,
@@ -58,16 +59,7 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 
                 if (captcha.isSolved()) {
                     System.out.println("CAPTCHA " + this.captchaFilename + " solved: " + captcha.text);
-
-                    // Report incorrectly solved CAPTCHA if neccessary.
-                    // Make sure you've checked if the CAPTCHA was in fact
-                    // incorrectly solved, or else you might get banned as
-                    // abuser.
-                    /*if (this._client.report(captcha)) {
-                        System.out.println("CAPTCHA " + this._captchaFilename + " reported as incorrectly solved");
-                    } else {
-                        System.out.println("Failed reporting incorrectly solved CAPTCHA");
-                    }*/
+                    return captcha.text;
                 } else {
                     System.out.println("Failed solving CAPTCHA");
                     Logger.logError("Failed solving CAPTCHA");
@@ -78,7 +70,7 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
             System.err.println(e.toString());
         }
 		
-		return captcha.text;
+		return null;
 	}
 	
 	public void reportCaptchaAsIncorrect() {

@@ -17,6 +17,7 @@ public class TerminCheckerApp {
 		emails.add("genia.sushko@gmail.com");
 		emails.add("yura.sushko@gmail.com");
 		boolean captchaIncorrect = true;
+		outerloop:
 		while (captchaIncorrect) {
 			result = checker.checkTermins();
 			switch (result.status) {
@@ -48,7 +49,7 @@ public class TerminCheckerApp {
 				// Save the picture and log the error
 				System.out.println("Wrong captcha text");
 				System.out.println(result.errorMessage);
-				break;
+				break outerloop;
 			case OTHER_ERROR:
 				// Log the error
 				System.out.println("Other error occured");

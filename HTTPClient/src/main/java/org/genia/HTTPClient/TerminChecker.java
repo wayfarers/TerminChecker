@@ -55,11 +55,14 @@ public class TerminChecker {
 			saveCaptchaImage(getMethod.getResponseBodyAsStream(), CAPTCHA_FILE);
 
 			captchaText = captchaSolver.solveCaptcha(CAPTCHA_FILE);
+			if (captchaText == null) {
+				return CheckResult.error("Capcha text is NULL");
+			}
 
 			String responseBody = submitCaptchaForm(captchaText);
 //			String responseBody = FakeResponse.getFakeResponse();
 			if (responseBody == null) {
-				CheckResult.error("Response body is NULL");
+				return CheckResult.error("Response body is NULL");
 			}
 
 			if(responseBody.contains(WRONG_TEXT)) {

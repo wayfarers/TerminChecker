@@ -6,11 +6,12 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class Logger {
 	public static void logError(String error) {
-		Date currentDate = Calendar.getInstance().getTime();
-		String message = new SimpleDateFormat("dd.mm.yy hh:mm:ss").format(currentDate) + ": " +  error + "\n";
+		Date currentDate = Calendar.getInstance(TimeZone.getTimeZone("Kiev")).getTime();
+		String message = new SimpleDateFormat("dd.mm.yy HH:mm:ss").format(currentDate) + ": " +  error + "\n";
 		File logFile = new File("log.txt");
 		try {
 			logFile.createNewFile();

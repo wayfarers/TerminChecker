@@ -59,6 +59,7 @@ public class TerminCheckerApp {
 				break;
 			}
 		}
+		Logger.logError("Result status: " + result.status.toString());
 		result.saveOnDisk();
 	}
 }

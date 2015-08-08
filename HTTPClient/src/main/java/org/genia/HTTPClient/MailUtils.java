@@ -43,7 +43,7 @@ public class MailUtils {
 
 		} catch (MessagingException e) {
 			Logger.logError("Error while sending email. " + e.getMessage());
-			throw new RuntimeException(e);
+//			throw new RuntimeException(e);
 		}
 	}
 }

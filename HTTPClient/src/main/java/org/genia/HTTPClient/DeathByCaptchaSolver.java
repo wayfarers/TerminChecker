@@ -90,9 +90,9 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 			e.printStackTrace();
 		} finally {
 			File img = new File(captchaFilename);
-			File wrongCaptchas = new File("wrongCaptchas\\");
+			File wrongCaptchas = new File("wrongCaptchas");
 			wrongCaptchas.mkdir();
-			img.renameTo(new File(wrongCaptchas.getAbsolutePath() + "\\" + captcha.text + ".jpg"));
+			img.renameTo(new File(wrongCaptchas.getAbsolutePath() + "/" + captcha.text + ".jpg"));
 		}
 	}
 }

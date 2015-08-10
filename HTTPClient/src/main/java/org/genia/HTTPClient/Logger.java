@@ -10,7 +10,7 @@ import java.util.TimeZone;
 
 public class Logger {
 	public static void logError(String error) {
-		Date currentDate = Calendar.getInstance(TimeZone.getTimeZone("Kiev")).getTime();
+		Date currentDate = Calendar.getInstance(TimeZone.getTimeZone("Europe/Kiev")).getTime();
 		String message = new SimpleDateFormat("dd.mm.yy HH:mm:ss").format(currentDate) + ": " +  error + "\n";
 		File logFile = new File("log.txt");
 		try {

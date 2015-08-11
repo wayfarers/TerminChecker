@@ -16,8 +16,9 @@ public class TerminCheckerApp {
 		List<String> emails = new ArrayList<>();
 		emails.add("genia.sushko@gmail.com");
 		emails.add("yura.sushko@gmail.com");
+		emails.add("ljoljka-2008@yandex.ru");
 		boolean captchaIncorrect = true;
-		outerloop:
+//		outerloop:
 		while (captchaIncorrect) {
 			result = checker.checkTermins();
 			switch (result.status) {
@@ -54,7 +55,8 @@ public class TerminCheckerApp {
 				// Log the error
 				System.out.println("Other error occured");
 				System.out.println(result.errorMessage);
-				break outerloop;
+				Logger.logError("Result status: " + result.status.toString());
+				return; 	//Don't need to save previous result if other error occured. Just log the error.
 			default:
 				break;
 			}

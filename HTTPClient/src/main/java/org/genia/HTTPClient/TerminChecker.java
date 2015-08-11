@@ -6,7 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -39,7 +42,6 @@ public class TerminChecker {
 	public CheckResult checkTermins() {
 		
 		String captchaText = null;
-//		String CAPTCHA_FILE = "D:\\captcha.jpg";
 
 		GetMethod getMethod = new GetMethod(IMAGE_URL);
 		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
@@ -59,7 +61,8 @@ public class TerminChecker {
 				return CheckResult.error("Capcha text is NULL");
 			}
 
-			String responseBody = submitCaptchaForm(captchaText);
+//			String responseBody = submitCaptchaForm(captchaText); 	//for guest visa
+			String responseBody = submitCaptchaFormNational(captchaText);	//for national visa
 //			String responseBody = FakeResponse.getFakeResponse();
 			if (responseBody == null) {
 				return CheckResult.error("Response body is NULL");
@@ -83,7 +86,16 @@ public class TerminChecker {
 				System.out.println(responseBody);
 				return CheckResult.error("Cannot parse dates");
 			}
-
+			
+			//check also next 3 month
+			for (int i = 1; i <= 3; i++) {
+				responseBody = checkNextMonth(i);
+				if (responseBody.contains(HAS_DATES)) {
+					result.status = Status.HAS_APPOINTMENTS;
+					result.appointments.addAll(parseDates(responseBody));
+				}
+			}
+			
 		} catch (HttpException e) {
 			result.errorMessage = "Fatal protocol violation: " + e.getMessage();
 			result.status = Status.OTHER_ERROR;
@@ -123,6 +135,48 @@ public class TerminChecker {
 		
 		return post.getResponseBodyAsString();
 	}
+	
+	private String checkNextMonth(int plusMonth) throws HttpException, IOException {
+
+		Calendar c = Calendar.getInstance();
+		c.add(Calendar.MONTH, plusMonth);
+		String dateStr = new SimpleDateFormat("dd.MM.yyyy").format(c.getTime());
+		
+		String addStr = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=" + dateStr;
+		
+		GetMethod getMethod = new GetMethod(POST_URL + addStr);
+		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
+				new DefaultHttpMethodRetryHandler(3, false));
+		
+		int statusCode = client.executeMethod(getMethod);
+
+		if (statusCode != HttpStatus.SC_OK) {
+			Logger.logError("Get method failed: " + getMethod.getStatusLine());
+			return null;
+		}
+		
+		return getMethod.getResponseBodyAsString();
+	}
+	
+	private String submitCaptchaFormNational(String captchaText) throws HttpException, IOException {
+
+		PostMethod post = new PostMethod(POST_URL);
+		post.addParameter("action:appointment_showMonth", "Weiter");
+		post.addParameter("captchaText", captchaText);
+		post.addParameter("categoryId", "906");
+		post.addParameter("locationCode", "kiew");
+		post.addParameter("realmId", "561");
+		post.setParameter("request_locale", "en");
+		
+		int statusCode = client.executeMethod(post);
+
+		if (statusCode != HttpStatus.SC_OK) {
+			Logger.logError("Post method failed: " + post.getStatusLine());
+			return null;
+		}
+		
+		return post.getResponseBodyAsString();
+	}
 
 	private void saveCaptchaImage(InputStream is, String fileName) {
 		try (FileOutputStream fos = new FileOutputStream(new File(fileName))) {
@@ -139,8 +193,8 @@ public class TerminChecker {
 	
 	public List<String> parseDates(String response) {
 		
-		List<String> dateList = new ArrayList<>();	//Diamond doesn't work
-//		
+		List<String> dateList = new ArrayList<>();	
+		
 //		Matcher matcher = Pattern.compile("<h4>[ ]*([^< ]+)[ ]*<").matcher(response);
 //		
 //		while (matcher.find()) {

@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,7 +12,7 @@ import com.DeathByCaptcha.SocketClient;
 
 public class DeathByCaptchaSolver extends CaptchaSolver {
 	
-	protected Client client;
+	protected Client dbcClient;
     protected String captchaFilename = null;
     String userName;
     String password;
@@ -23,28 +23,28 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
 		try {
 			props.load(new FileInputStream("credentials.properties"));
 		} catch (FileNotFoundException e) {
-			Logger.logError("DBC credentials not found.");
+			LoggerUtil.logError("DBC credentials not found.");
 			e.printStackTrace();
 		} catch (IOException e) {
-			Logger.logError("Error while loading DBC credentials. " + e.getMessage());
+			LoggerUtil.logError("Error while loading DBC credentials. " + e.getMessage());
 			e.printStackTrace();
 		}
 		userName = props.getProperty("username");
 		password = props.getProperty("password");
 		
-		client = (Client)(new SocketClient(userName, password));
+		dbcClient = (Client)(new SocketClient(userName, password));
 	}	
     
 	@Override
 	public String solveCaptcha(String fileName) {
-		client.isVerbose = true;
+		dbcClient.isVerbose = true;
 		captchaFilename = fileName;
 		captcha = null;
 		
 		try {
             // Put your CAPTCHA image file, file object, input stream,
             // or vector of bytes here:
-            captcha = this.client.upload(fileName);
+            captcha = this.dbcClient.upload(fileName);
             if (null != captcha) {
                 System.out.println("CAPTCHA " + this.captchaFilename + " uploaded: " + captcha.id);
 
@@ -52,7 +52,7 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
                 int sec = 0;
                 while (captcha.isUploaded() && !captcha.isSolved()) {
                     Thread.sleep(Client.POLLS_INTERVAL * 1000);
-                    captcha = this.client.getCaptcha(captcha);
+                    captcha = this.dbcClient.getCaptcha(captcha);
                     sec += 5;
                     System.out.println(sec + "sec elapsed");
                 }
@@ -62,11 +62,11 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
                     return captcha.text;
                 } else {
                     System.out.println("Failed solving CAPTCHA");
-                    Logger.logError("Failed solving CAPTCHA");
+                    LoggerUtil.logError("Failed solving CAPTCHA");
                 }
             }
         } catch (java.lang.Exception e) {
-        	Logger.logError(e.getMessage());
+        	LoggerUtil.logError(e.getMessage());
             System.err.println(e.toString());
         }
 		
@@ -79,20 +79,15 @@ public class DeathByCaptchaSolver extends CaptchaSolver {
         // incorrectly solved, or else you might get banned as
         // abuser.
         try {
-			if (client.report(captcha)) {
+			if (dbcClient.report(captcha)) {
 			    System.out.println("CAPTCHA " + this.captchaFilename + " reported as incorrectly solved");
 			} else {
 			    System.out.println("Failed reporting incorrectly solved CAPTCHA");
-			    Logger.logError("Failed reporting incorrectly solved CAPTCHA");
+			    LoggerUtil.logError("Failed reporting incorrectly solved CAPTCHA");
 			}
 		}  catch (java.lang.Exception e) {
-			Logger.logError(e.getMessage());
+			LoggerUtil.logError(e.getMessage());
 			e.printStackTrace();
-		} finally {
-			File img = new File(captchaFilename);
-			File wrongCaptchas = new File("wrongCaptchas");
-			wrongCaptchas.mkdir();
-			img.renameTo(new File(wrongCaptchas.getAbsolutePath() + "/" + captcha.text + ".jpg"));
-		}
+		} 
 	}
 }

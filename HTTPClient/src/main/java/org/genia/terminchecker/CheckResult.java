@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,7 +13,7 @@ import java.util.List;
 public class CheckResult implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
-	Status status;
+	public Status status;
 	public String errorMessage;
 	public List<String> appointments = new ArrayList<>();
 	
@@ -21,7 +21,7 @@ public class CheckResult implements Serializable {
 		CheckResult result = new CheckResult();
 		result.status = Status.OTHER_ERROR;
 		result.errorMessage = message;
-		Logger.logError(message);
+		LoggerUtil.logError(message);
 		return result;
 	}
 	
@@ -40,10 +40,10 @@ public class CheckResult implements Serializable {
 		return false;
 	}
 	
-	public void saveOnDisk() {
+	public void saveOnDisk(String fileName) {
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(
-					new FileOutputStream("result.dat"));
+					new FileOutputStream(fileName));
 			out.writeObject(this);
 			out.close();
 		} catch (IOException e) {
@@ -51,9 +51,9 @@ public class CheckResult implements Serializable {
 		}
 	}
 	
-	public static CheckResult restoreLastResult() {
+	public static CheckResult restoreFrom(String fileName) {
 		try (ObjectInputStream in = new ObjectInputStream(
-				new FileInputStream("result.dat"));) {
+				new FileInputStream(fileName));) {
 			return (CheckResult) in.readObject();
 		} catch (FileNotFoundException e) {
 			System.out.println("No previous result file was found");

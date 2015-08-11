@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 public enum Status {
 	HAS_APPOINTMENTS, 

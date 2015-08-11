@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.io.IOException;
 import java.util.Scanner;

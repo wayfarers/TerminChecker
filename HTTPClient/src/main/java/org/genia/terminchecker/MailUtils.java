@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.util.Properties;
 
@@ -42,7 +42,7 @@ public class MailUtils {
 			System.out.println("Email was sent to " + to);
 
 		} catch (MessagingException e) {
-			Logger.logError("Error while sending email. " + e.getMessage());
+			LoggerUtil.logError("Error while sending email. " + e.getMessage());
 //			throw new RuntimeException(e);
 		}
 	}

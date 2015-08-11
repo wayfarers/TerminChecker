@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class Logger {
+public class LoggerUtil {
 	public static void logError(String error) {
 		DateFormat df = new SimpleDateFormat("dd.MM.yy HH:mm:ss");
 		TimeZone zone = TimeZone.getTimeZone("Europe/Kiev");

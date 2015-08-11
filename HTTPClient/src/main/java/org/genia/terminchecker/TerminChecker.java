@@ -1,4 +1,4 @@
-package org.genia.HTTPClient;
+package org.genia.terminchecker;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,27 +20,35 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 
+// Separation of concerns (responsibilities)
 public class TerminChecker {
 	private static String IMAGE_URL = "https://service2.diplo.de/rktermin/extern/captcha.jpg?locationCode=kiew";
 	private static String POST_URL = "https://service2.diplo.de/rktermin/extern/appointment_showMonth.do";
 	private static String NO_DATES = "Unfortunately, there are no appointments available at this time.";
-	private static String WRONG_TEXT = "The entered text was wrong";
+	private static String WRONG_CAPTCHA = "The entered text was wrong";
 	private static String HAS_DATES = "Appointments are available";
 	private static String CAPTCHA_FILE = "captcha.jpg";
 	
-	CaptchaSolver captchaSolver;
-	VisaType visaType = VisaType.NATIONAL;
-
-	HttpClient client = new HttpClient();
 	
-	CheckResult result = new CheckResult();
+	final VisaType visaType;
+	final int numOfMonths;
 
-	public TerminChecker(CaptchaSolver captchaSolver) {
+	private HttpClient client = new HttpClient();
+	final private CaptchaSolver captchaSolver;
+	
+	
+
+	public TerminChecker(VisaType visaType, int numOfMonths, CaptchaSolver captchaSolver) {
 		this.captchaSolver = captchaSolver;
+		this.numOfMonths = numOfMonths;
+		this.visaType = visaType;
+		
+		if (numOfMonths <= 0) 
+			throw new IllegalArgumentException("Should request at least 1 month");
 	}
 
 	public CheckResult checkTermins() {
-		
+		CheckResult result = new CheckResult();
 		String captchaText = null;
 
 		GetMethod getMethod = new GetMethod(IMAGE_URL);
@@ -61,18 +69,21 @@ public class TerminChecker {
 				return CheckResult.error("Capcha text is NULL");
 			}
 
-			String responseBody = submitCaptchaForm(captchaText); 	//for guest visa
+			String responseBody = submitCaptchaForm(captchaText);
 //			String responseBody = FakeResponse.getFakeResponse();
 			if (responseBody == null) {
 				return CheckResult.error("Response body is NULL");
 			}
 
-			if(responseBody.contains(WRONG_TEXT)) {
+			if(responseBody.contains(WRONG_CAPTCHA)) {
 				// TODO: Possibly make reportCaptchaAsIncorrect a generic method in the interface.
 				if (captchaSolver instanceof DeathByCaptchaSolver) {
 					DeathByCaptchaSolver dbcSolver = (DeathByCaptchaSolver) captchaSolver;
 					dbcSolver.reportCaptchaAsIncorrect();
 				}
+				
+				saveIncorrectCaptcha(captchaText);
+				
 				throw new WrongTextExeption("The entered text was wrong. Captcha text: " + captchaText);
 			}
 
@@ -87,7 +98,7 @@ public class TerminChecker {
 			}
 			
 			//check also next 3 month
-			String[] responses = checkNextMonths(3);
+			String[] responses = checkNextMonths(numOfMonths - 1);
 			
 			for (String response : responses) {
 				if (response.contains(HAS_DATES)) {
@@ -99,15 +110,15 @@ public class TerminChecker {
 		} catch (HttpException e) {
 			result.errorMessage = "Fatal protocol violation: " + e.getMessage();
 			result.status = Status.OTHER_ERROR;
-			Logger.logError(result.errorMessage);
+			LoggerUtil.logError(result.errorMessage);
 		} catch (IOException e) {
 			result.errorMessage = "Fatal transport error: " + e.getMessage();
 			result.status = Status.OTHER_ERROR;
-			Logger.logError(result.errorMessage);
+			LoggerUtil.logError(result.errorMessage);
 		} catch (WrongTextExeption e) {
 			result.errorMessage = e.getMessage();
 			result.status = Status.CAPTCHA_ERROR;
-			Logger.logError(result.errorMessage);
+			LoggerUtil.logError(result.errorMessage);
 		} finally {
 			// Release the connection.
 			getMethod.releaseConnection();
@@ -124,55 +135,33 @@ public class TerminChecker {
 		post.addParameter("locationCode", "kiew");
 		post.setParameter("request_locale", "en");
 		
-		switch (visaType) {
-		case GUEST:
-			post.addParameter("categoryId", "584");
-			post.addParameter("realmId", "357");
-			break;
-		case NATIONAL:
-			post.addParameter("categoryId", "906");
-			post.addParameter("realmId", "561");
-			break;
-		default:	//default - guest visa
-			post.addParameter("categoryId", "584");
-			post.addParameter("realmId", "357");
-			break;
-		}
+		post.addParameter("categoryId", "" + visaType.categoryId);
+		post.addParameter("realmId", "" + visaType.realmId);
+		
 		
 		int statusCode = client.executeMethod(post);
 
 		if (statusCode != HttpStatus.SC_OK) {
-			Logger.logError("Post method failed: " + post.getStatusLine());
+			LoggerUtil.logError("Post method failed: " + post.getStatusLine());
 			return null;
 		}
 		
 		return post.getResponseBodyAsString();
 	}
 	
-	private String[] checkNextMonths(int plusMonth) throws HttpException, IOException {
+	private String[] checkNextMonths(int numOfMonths) throws HttpException, IOException {
 		
-		String addStrGuest = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
-		String addStrNational = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
-		String[] responses = new String[plusMonth];
+		String addStr = "?request_locale=en&locationCode=kiew&realmId=" + visaType.realmId + "&categoryId=" + visaType.categoryId + "&dateStr=";
+		String[] responses = new String[numOfMonths];
 		
 		GetMethod getMethod = null;
 		Calendar c = Calendar.getInstance();
 		
-		for(int i = 0; i < plusMonth; i++) {
-			c.add(Calendar.MONTH, plusMonth);
-			String dateStr = new SimpleDateFormat("dd.MM.yyyy").format(c.getTime());
+		for(int i = 0; i < numOfMonths; i++) {
+			c.add(Calendar.MONTH, numOfMonths);
 			
-			switch (visaType) {
-			case GUEST:
-				getMethod = new GetMethod(POST_URL + addStrGuest + dateStr);
-				break;
-			case NATIONAL:
-				getMethod = new GetMethod(POST_URL + addStrNational + dateStr);
-				break;
-			default:
-				getMethod = new GetMethod(POST_URL + addStrGuest + dateStr);
-				break;
-			}
+			String dateStr = new SimpleDateFormat("dd.MM.yyyy").format(c.getTime());
+			getMethod = new GetMethod(POST_URL + addStr + dateStr);
 			
 			getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
 					new DefaultHttpMethodRetryHandler(3, false));
@@ -180,7 +169,7 @@ public class TerminChecker {
 			int statusCode = client.executeMethod(getMethod);
 
 			if (statusCode != HttpStatus.SC_OK) {
-				Logger.logError("Get method failed: " + getMethod.getStatusLine());
+				LoggerUtil.logError("Get method failed: " + getMethod.getStatusLine());
 				return responses;
 			}
 			responses[i] = getMethod.getResponseBodyAsString();
@@ -196,13 +185,18 @@ public class TerminChecker {
 				fos.write(inByte);
 			is.close();
 		} catch (IOException e) {
-			Logger.logError("Error saving captcha image. " + e.getMessage());
+			LoggerUtil.logError("Error saving captcha image. " + e.getMessage());
 		}
-		
-		
 	}
 	
-	public List<String> parseDates(String response) {
+	private void saveIncorrectCaptcha(String captchaText) {
+		File img = new File(CAPTCHA_FILE);
+		File wrongCaptchas = new File("wrongCaptchas");
+		wrongCaptchas.mkdir();
+		img.renameTo(new File(wrongCaptchas.getAbsolutePath() + "/" + captchaText + ".jpg"));
+	}
+	
+	private List<String> parseDates(String response) {
 		
 		List<String> dateList = new ArrayList<>();	
 		
@@ -226,41 +220,5 @@ public class TerminChecker {
 			endIndex = response.indexOf(end, startIndex);
 		}
 		return dateList;
-	}
-	
-	public void sendNotification(String email) {
-		if (email == null) {
-			return;
-		}
-		Properties creds = new Properties();
-		try {
-			creds.load(new FileInputStream("mailCredentials.properties"));
-		} catch (FileNotFoundException e) {
-			Logger.logError("Mail credentials not found.");
-			e.printStackTrace();
-		} catch (IOException e) {
-			Logger.logError("Error while loading credentials.");
-			e.printStackTrace();
-		}
-		String subject = "Termin Checker: changes in dates!";
-		String body = "";
-
-		if(result.status == Status.NO_APPOINTMENTS) {
-			body = "No dates are available for now.";
-		} else if (result.status == Status.HAS_APPOINTMENTS) {
-			body += "Appointments are available:\n\n";
-			for (String date : result.appointments) {
-				body += date + "\n";
-			}
-		} else {
-			body = "Some error occured: " + result.errorMessage;
-		}
-		
-		MailUtils.sendEmail(creds, email, subject, body);
-	}
-	
-	public static boolean isDatesChanged(CheckResult result) {
-		CheckResult prevResult = CheckResult.restoreLastResult();
-		return !result.equals(prevResult);
 	}
 }

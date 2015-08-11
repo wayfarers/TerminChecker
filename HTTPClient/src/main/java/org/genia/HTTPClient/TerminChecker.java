@@ -12,6 +12,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.Stack;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -30,6 +31,7 @@ public class TerminChecker {
 	private static String CAPTCHA_FILE = "captcha.jpg";
 	
 	CaptchaSolver captchaSolver;
+	VisaType visaType = VisaType.NATIONAL;
 
 	HttpClient client = new HttpClient();
 	
@@ -61,8 +63,7 @@ public class TerminChecker {
 				return CheckResult.error("Capcha text is NULL");
 			}
 
-//			String responseBody = submitCaptchaForm(captchaText); 	//for guest visa
-			String responseBody = submitCaptchaFormNational(captchaText);	//for national visa
+			String responseBody = submitCaptchaForm(captchaText); 	//for guest visa
 //			String responseBody = FakeResponse.getFakeResponse();
 			if (responseBody == null) {
 				return CheckResult.error("Response body is NULL");
@@ -88,11 +89,12 @@ public class TerminChecker {
 			}
 			
 			//check also next 3 month
-			for (int i = 1; i <= 3; i++) {
-				responseBody = checkNextMonth(i);
-				if (responseBody.contains(HAS_DATES)) {
+			String[] responses = checkNextMonth(3);
+			
+			for (String response : responses) {
+				if (response.contains(HAS_DATES)) {
 					result.status = Status.HAS_APPOINTMENTS;
-					result.appointments.addAll(parseDates(responseBody));
+					result.appointments.addAll(parseDates(response));
 				}
 			}
 			
@@ -121,10 +123,23 @@ public class TerminChecker {
 		PostMethod post = new PostMethod(POST_URL);
 		post.addParameter("action:appointment_showMonth", "Weiter");
 		post.addParameter("captchaText", captchaText);
-		post.addParameter("categoryId", "584");
 		post.addParameter("locationCode", "kiew");
-		post.addParameter("realmId", "357");
 		post.setParameter("request_locale", "en");
+		
+		switch (visaType) {
+		case GUEST:
+			post.addParameter("categoryId", "584");
+			post.addParameter("realmId", "357");
+			break;
+		case NATIONAL:
+			post.addParameter("categoryId", "906");
+			post.addParameter("realmId", "561");
+			break;
+		default:	//default - guest visa
+			post.addParameter("categoryId", "584");
+			post.addParameter("realmId", "357");
+			break;
+		}
 		
 		int statusCode = client.executeMethod(post);
 
@@ -136,48 +151,46 @@ public class TerminChecker {
 		return post.getResponseBodyAsString();
 	}
 	
-	private String checkNextMonth(int plusMonth) throws HttpException, IOException {
-
+	private String[] checkNextMonth(int plusMonth) throws HttpException, IOException {
+		
+		String addStrGuest = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
+		String addStrNational = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
+		String[] responses = new String[plusMonth];
+		
+		GetMethod getMethod = null;
 		Calendar c = Calendar.getInstance();
-		c.add(Calendar.MONTH, plusMonth);
-		String dateStr = new SimpleDateFormat("dd.MM.yyyy").format(c.getTime());
 		
-		String addStr = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=" + dateStr;
-		
-		GetMethod getMethod = new GetMethod(POST_URL + addStr);
-		getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
-				new DefaultHttpMethodRetryHandler(3, false));
-		
-		int statusCode = client.executeMethod(getMethod);
+		for(int i = 0; i < plusMonth; i++) {
+			c.add(Calendar.MONTH, plusMonth);
+			String dateStr = new SimpleDateFormat("dd.MM.yyyy").format(c.getTime());
+			
+			switch (visaType) {
+			case GUEST:
+				getMethod = new GetMethod(POST_URL + addStrGuest + dateStr);
+				break;
+			case NATIONAL:
+				getMethod = new GetMethod(POST_URL + addStrNational + dateStr);
+				break;
+			default:
+				getMethod = new GetMethod(POST_URL + addStrGuest + dateStr);
+				break;
+			}
+			
+			getMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, 
+					new DefaultHttpMethodRetryHandler(3, false));
+			
+			int statusCode = client.executeMethod(getMethod);
 
-		if (statusCode != HttpStatus.SC_OK) {
-			Logger.logError("Get method failed: " + getMethod.getStatusLine());
-			return null;
+			if (statusCode != HttpStatus.SC_OK) {
+				Logger.logError("Get method failed: " + getMethod.getStatusLine());
+				return responses;
+			}
+			responses[i] = getMethod.getResponseBodyAsString();
+			
 		}
-		
-		return getMethod.getResponseBodyAsString();
+		return responses;
 	}
 	
-	private String submitCaptchaFormNational(String captchaText) throws HttpException, IOException {
-
-		PostMethod post = new PostMethod(POST_URL);
-		post.addParameter("action:appointment_showMonth", "Weiter");
-		post.addParameter("captchaText", captchaText);
-		post.addParameter("categoryId", "906");
-		post.addParameter("locationCode", "kiew");
-		post.addParameter("realmId", "561");
-		post.setParameter("request_locale", "en");
-		
-		int statusCode = client.executeMethod(post);
-
-		if (statusCode != HttpStatus.SC_OK) {
-			Logger.logError("Post method failed: " + post.getStatusLine());
-			return null;
-		}
-		
-		return post.getResponseBodyAsString();
-	}
-
 	private void saveCaptchaImage(InputStream is, String fileName) {
 		try (FileOutputStream fos = new FileOutputStream(new File(fileName))) {
 			int inByte;
@@ -218,6 +231,9 @@ public class TerminChecker {
 	}
 	
 	public void sendNotification(String email) {
+		if (email == null) {
+			return;
+		}
 		Properties creds = new Properties();
 		try {
 			creds.load(new FileInputStream("mailCredentials.properties"));

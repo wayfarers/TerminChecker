@@ -9,10 +9,8 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.Stack;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -89,7 +87,7 @@ public class TerminChecker {
 			}
 			
 			//check also next 3 month
-			String[] responses = checkNextMonth(3);
+			String[] responses = checkNextMonths(3);
 			
 			for (String response : responses) {
 				if (response.contains(HAS_DATES)) {
@@ -151,7 +149,7 @@ public class TerminChecker {
 		return post.getResponseBodyAsString();
 	}
 	
-	private String[] checkNextMonth(int plusMonth) throws HttpException, IOException {
+	private String[] checkNextMonths(int plusMonth) throws HttpException, IOException {
 		
 		String addStrGuest = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
 		String addStrNational = "?request_locale=en&locationCode=kiew&realmId=561&categoryId=906&dateStr=";
